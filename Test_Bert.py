@@ -2,15 +2,18 @@ from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import re
 
-file_path = '/Users/sehwagvijay/Desktop/resume_data/Resume/Trimmed_Resume.csv'
+file_path = '/Users/sehwagvijay/Desktop/Projects/BERT-Based-Job-Description-Classification-and-Skill-Tagging/resume_data/Trimmed_Resume.csv'
 resume_data = pd.read_csv(file_path)
+
+#HR, Designer, Information-Technology, Teacher, Advocate, Business-Development, Healthcare, Fitness, Agriculture, BPO, Sales, Consultant, Digital-Media
 
 label_encoder = LabelEncoder()
 encoded_labels = label_encoder.fit_transform(resume_data['Category'])
 
-model_path = '/Users/sehwagvijay/Desktop/resume_data/resume_bert_model'
-tokenizer_path = '/Users/sehwagvijay/Desktop/resume_data/resume_bert_tokenizer'
+model_path = '/Users/sehwagvijay/Desktop/Projects/BERT-Based-Job-Description-Classification-and-Skill-Tagging/resume_bert_model'
+tokenizer_path = '/Users/sehwagvijay/Desktop/Projects/BERT-Based-Job-Description-Classification-and-Skill-Tagging/resume_bert_tokenizer'
 
 model = BertForSequenceClassification.from_pretrained(model_path)
 tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
@@ -38,67 +41,60 @@ def predict_category(resume_text):
     category = label_encoder.inverse_transform([preds])[0]
     return category, probs
 
+def extract_skills_from_text(resume_text):
+    # Use regex to find the text that comes after "Skills" and before any other section
+    match = re.search(r'Skills\s*:\s*(.+?)(?:\n[A-Z]|$)', resume_text, re.IGNORECASE | re.DOTALL)
+    if match:
+        # Extract the skills section
+        skills_text = match.group(1).strip()
+        # Split the skills by commas (or other delimiters)
+        skills_list = [skill.strip() for skill in skills_text.split(',')]
+        return skills_list
+    return []
+
 new_resume = """
-Professional Summary:
-Dynamic Human Resources Professional with over 8 years of experience in talent acquisition, employee relations, and performance management. Adept at implementing HR policies and procedures, driving employee engagement initiatives, and fostering a positive workplace culture. Proven track record in recruiting top talent, reducing employee turnover, and enhancing organizational effectiveness.
+John Doe
+123 Main Street, Anytown, USA
+Email: johndoe@email.com | Phone: (555) 555-5555
+LinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe
 
-Professional Experience:
-Human Resources Manager
-ABC Corporation, City, State
-March 2019 – Present
+Objective:
+Results-oriented software engineer with 5+ years of experience in full-stack development. Adept at developing scalable web applications and leading cross-functional teams in Agile environments. Seeking to leverage my technical and leadership skills in a challenging role at a forward-thinking company.
 
-Lead the HR team in developing and implementing HR strategies and initiatives aligned with business goals.
-Manage the recruitment and selection process, resulting in a 20% increase in quality hires.
-Oversee employee relations, handling conflicts, grievances, and disciplinary actions.
-Develop and implement performance management systems, including appraisals and feedback mechanisms.
-Conduct training and development programs to enhance employee skills and career growth.
-Ensure compliance with labor laws and regulations, maintaining a safe and inclusive workplace.
-Senior HR Generalist
-XYZ Inc., City, State
-June 2015 – February 2019
+Experience:
 
-Supported HR operations, including recruitment, onboarding, and employee engagement activities.
-Conducted exit interviews and analyzed turnover data to develop retention strategies.
-Assisted in the development and implementation of HR policies and procedures.
-Coordinated and facilitated employee training sessions on various HR-related topics.
-Collaborated with management to identify staffing needs and develop job descriptions.
-Administered employee benefits programs and addressed employee queries and concerns.
-HR Coordinator
-DEF Company, City, State
-January 2012 – May 2015
+Software Engineer | XYZ Corp
+Anytown, USA | January 2018 – Present
+- Developed and maintained high-performance web applications using JavaScript, React, and Node.js.
+- Implemented RESTful APIs and microservices architecture, improving application scalability by 30%.
+- Collaborated with UX/UI designers to enhance user experience, resulting in a 25% increase in user retention.
+- Led a team of 5 developers in adopting Agile methodologies, reducing development cycle time by 20%.
 
-Assisted in the recruitment process, including job postings, resume screening, and interview scheduling.
-Conducted new employee orientations and ensured smooth onboarding processes.
-Maintained employee records and HR databases with accuracy and confidentiality.
-Supported employee relations efforts by addressing employee inquiries and resolving issues.
-Coordinated employee engagement activities, such as team-building events and recognition programs.
-Assisted in payroll processing and benefits administration.
+Junior Web Developer | ABC Inc.
+Anytown, USA | June 2016 – December 2017
+- Built and optimized responsive web pages using HTML, CSS, and JavaScript.
+- Assisted in the development of backend services using Python and Django.
+- Conducted code reviews and provided feedback to junior developers, improving code quality by 15%.
+- Worked closely with QA teams to ensure software quality and stability before deployment.
+
 Education:
-Master of Business Administration (MBA) in Human Resources
-University of State, City, State
-Graduated: May 2011
 
-Bachelor of Science in Psychology
-University of State, City, State
-Graduated: May 2009
+Bachelor of Science in Computer Science
+Anytown University | September 2012 – May 2016
 
 Skills:
-Talent Acquisition and Recruitment
-Employee Relations and Conflict Resolution
-Performance Management
-HR Policies and Procedures
-Training and Development
-Employee Engagement
-Compliance and Labor Laws
-HRIS and HR Analytics
-Excellent Communication and Interpersonal Skills
+Python, JavaScript, React, Node.js, Express, MongoDB, SQL, HTML, CSS, Git, Docker, Kubernetes, AWS, Agile Methodologies
+
 Certifications:
-Professional in Human Resources (PHR)
-SHRM Certified Professional (SHRM-CP)
-Talent Acquisition Specialist Certification
-Certified Employee Benefits Specialist (CEBS)
+Certified Kubernetes Administrator (CKA) | Linux Foundation | 2019
+AWS Certified Solutions Architect | Amazon Web Services | 2018
 """
+
 
 predicted_category, probabilities = predict_category(new_resume)
 print(f'The predicted job category is: {predicted_category}')
 print(f'Probabilities: {probabilities}')
+
+extracted_skills = extract_skills_from_text(new_resume)
+print("Extracted Skills:", extracted_skills)
+
